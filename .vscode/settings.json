@@ -1,4 +1,5 @@
 {
+    "editor.semanticHighlighting.enabled": false,
     "files.associations": {
         "ostream": "cpp",
         "atomic": "cpp",
