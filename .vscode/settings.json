@@ -1,0 +1,24 @@
+{
+    "files.associations": {
+        "ostream": "cpp",
+        "atomic": "cpp",
+        "cwchar": "cpp",
+        "string": "cpp",
+        "exception": "cpp",
+        "functional": "cpp",
+        "initializer_list": "cpp",
+        "iosfwd": "cpp",
+        "istream": "cpp",
+        "new": "cpp",
+        "stdexcept": "cpp",
+        "streambuf": "cpp",
+        "type_traits": "cpp",
+        "utility": "cpp"
+    },
+    "explorer.fileNesting.enabled": true,
+    "explorer.fileNesting.patterns": {
+        "*.cc": "${capture}.md",
+        "*.cpp": "${capture}.md",
+        "*.c": "${capture}.md"
+    }
+}
