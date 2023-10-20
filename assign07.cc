@@ -1,4 +1,5 @@
 #include <iostream>
+#include <functional>
 
 using namespace std;
 
@@ -42,6 +43,25 @@ class LinkedList {
             cout << to_string(current->data) << endl;
         } while (next() != nullptr);
         current = og_curr;
+    }
+
+    int index_of(Node<T> *node) {
+        int idx = -1;
+        Node<T> *og_curr = current;
+        current = head;
+
+        int count = 0;
+        while (count < _length) {
+            if (current->data == node->data) {
+                idx = count;
+                break;
+            }
+            next();
+            count++;
+        }
+
+        current = og_curr;
+        return idx;
     }
 
     Node<T> *node_at(int idx) {
@@ -115,19 +135,121 @@ class LinkedList {
         _length--;
         delete node_at_idx;
     }
+
+    Node<T> *first_where(const std::function<bool(T)>& predicate) {
+        Node<T> *res = nullptr;
+        Node<T> *og_curr = current;
+        current = head;
+        do {
+            if (predicate(current->data)) {
+                res = current;
+            }
+        } while (next());
+        return res;
+    }
+
+    LinkedList<T> where(const std::function<bool(T)>& predicate) {
+        LinkedList<T> res;
+        Node<T> *og_curr = current;
+        current = head;
+        do {
+            if (predicate(current->data)) {
+                res.insert_at(res.length, current->data);
+            }
+        } while (next());
+        return res;
+    }
 };
 
+struct Student {
+    string name;
+    string dob;
+};
+
+class StudentOps {
+   public:
+    static string to_string(Student stud) {
+        return "- " + stud.name + " (" + stud.dob + ")";
+    }
+
+    static Student *from_stdout() {
+        Student *stud = new Student;
+        cout << "- Name of student: ";
+        cin >> stud->name;
+        cout << "- DOB of student (dd/mm/yy): ";
+        cin >> stud->dob;
+        return stud;
+    }
+};
+
+string to_string(Student stud) {
+    return StudentOps::to_string(stud);   
+}
+
+bool operator==(Student& s1, Student& s2) {
+    return (s1.name == s2.name) && (s1.dob == s2.dob);
+}
+
 int main() {
-    LinkedList<int> ll;
-    for (int i = 0; i < 10; i++) ll.insert_at(i, i);
-    ll.print();
-    ll.remove_at(3);
-    cout << endl;
-    ll.print();
-    ll.remove_at(8);
-    cout << endl;
-    ll.print();
-    ll.remove_at(0);
-    cout << endl;
-    ll.print();
+    LinkedList<Student> studs;
+    while (true) {
+        cout << "Select operation: " << endl;
+        cout << "1. Enter new student" << endl;
+        cout << "2. Delete a student" << endl;
+        cout << "3. See whose birthday is it today" << endl;
+        cout << "4. Display all students" << endl;
+        cout << "0. Exit" << endl;
+        cout << "Enter your choice: ";
+
+        int choice;
+        cin >> choice;
+        cout << endl;
+
+        if (choice == 0) {
+            break;
+        }
+
+        Student temp;
+        switch (choice) {
+            case 1: {
+                cout << "Add new student: " << endl; 
+                studs.insert_at(studs.length, *StudentOps::from_stdout());
+                break;
+            }
+            
+            case 2: {
+                cout << "Delete a student: " << endl;
+                cout << "- Name of student: ";
+                cin >> temp.name;
+                Node<Student> *student = studs.first_where([temp](Student s) { return s.name == temp.name; });
+                if (student == nullptr) {
+                    cout << "- No student exists with given name." << endl;
+                } else {
+                    studs.remove_at(studs.index_of(student));
+                }
+                break;
+            }
+
+            case 3: {
+                cout << "Today's birthdays: " << endl;
+                cout << "- Todays date: ";
+                cin >> temp.dob;
+                LinkedList<Student> birthday_studs = studs.where([temp](Student s) { return s.dob == temp.dob; });
+                birthday_studs.print();
+                break;
+            }
+            
+            case 4: {
+                cout << "All students: " << endl;
+                studs.print();
+                break;
+            }
+            
+            default:
+                cout << "Please select a valid operation..." << endl;
+                break;
+        }
+
+        cout << "------------------------------------------------------------------" << endl;
+    }
 }
