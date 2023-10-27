@@ -1,6 +1,6 @@
 #include <iostream>
 #include <functional>
-#include <regex>
+#include <ctime>
 
 using namespace std;
 
@@ -34,13 +34,6 @@ class LinkedList {
         return nullptr;
     }
 
-    Node<T> *peek() {
-        if (has_next()) {
-            return current->link;
-        }
-        return nullptr;
-    }
-
     bool is_empty() { return head == nullptr; }
 
     void print() {
@@ -48,7 +41,7 @@ class LinkedList {
         Node<T> *og_curr = current;
         current = head;
         do {
-            cout << "- " << to_string(current->data) << endl;
+            cout << to_string(current->data) << endl;
         } while (next() != nullptr);
         current = og_curr;
     }
@@ -151,8 +144,6 @@ class LinkedList {
 
     LinkedList<T> where(const std::function<bool(T)>& predicate) {
         LinkedList<T> res;
-        if (is_empty()) return res;
-
         Node<T> *og_curr = current;
         current = head;
         do {
@@ -162,115 +153,118 @@ class LinkedList {
         } while (next());
         return res;
     }
+};
 
-    bool contains(T element) {
-        return where([element](const T e) { return e == element; }).length > 0;
-    }
+struct DOB {
+    int day;
+    int month;
+    int year;
+};
 
-    void sort(const std::function<bool(T, T)>& predicate) {
-        auto og_curr = current;
-        current = head;
-        do {
-            auto og_curr2 = current;
-            current = head;
-            Node<T> *prev = nullptr;
-            do {
-                if (!predicate(peek()->data, peek()->link->data)) {
-                    Node<T> *next = peek()->link;
-                    Node<T> *curr = peek();
-                    curr->link = next->link;
-                    next->link = curr;
-                    current->link = next;
-                }
-                prev = next();
-            } while (peek()->link != nullptr);
-            current = og_curr2;
-        } while (next() != nullptr);
-        current = og_curr;
+struct Student {
+    string name;
+    DOB dob;
+};
+
+class StudentOps {
+   public:
+    static Student *from_stdout() {
+        Student *stud = new Student;
+        cout << "- Name of student: ";
+        cin >> stud->name;
+        cout << "- DOB of student (dd mm yyyy): ";
+        cin >> stud->dob.day >> stud->dob.month >> stud->dob.year;
+        return stud;
     }
 };
 
-struct Appointment {
-    float start_time;
-    float end_time;
-};
-
-string to_string(Appointment& a) {
-    string start = regex_replace(to_string(a.start_time), regex("\\."), ":");
-    string end =  regex_replace(to_string(a.end_time), regex("\\."), ":");
-    return "[ " + start.substr(0, start.find(":") + 3) + " - " + end.substr(0, end.find(":") + 3) + " ]";
+string to_string(Student stud) {
+    return "- " + stud.name + 
+        " (" + std::to_string(stud.dob.day) + "/" 
+        + std::to_string(stud.dob.month) + "/" 
+        + std::to_string(stud.dob.year) + ")";
 }
 
-bool operator==(const Appointment& a1, const Appointment& a2) {
-    return a1.start_time == a2.start_time && a1.end_time == a2.end_time;
+bool operator==(DOB& d1, DOB& d2) {
+    return d1.day == d2.day && d1.month == d2.month && d1.year == d2.year;
 }
 
+bool operator==(Student& s1, Student& s2) {
+    return (s1.name == s2.name) && (s1.dob == s2.dob);
+}
+
+string todays_date() {
+    time_t t = time(0);
+    tm* now = localtime(&t);
+    string res = to_string(now->tm_mday) + "/" + to_string(now->tm_mon + 1);
+    return res;
+}
 
 int main() {
-    LinkedList<Appointment> slots;
-    slots.insert_at(slots.length, {9.0, 10.0});
-    slots.insert_at(slots.length, {10.30, 11.30});
-    slots.insert_at(slots.length, {12.0, 1.0});
-    slots.insert_at(slots.length, {3.0, 4.0});
-    slots.insert_at(slots.length, {4.30, 5.30});
-
-    LinkedList<Appointment> appointments;
+    string date = todays_date();
+    LinkedList<Student> studs;
     while (true) {
         cout << "Select operation: " << endl;
-        cout << "1. Display available slots" << endl;
-        cout << "2. Book appointment" << endl;
-        cout << "3. Cancel appointment" << endl;
-        cout << "4. Sort appointments" << endl;
+        cout << "1. Enter new student" << endl;
+        cout << "2. Delete a student" << endl;
+        cout << "3. See whose birthday is it today" << endl;
+        cout << "4. Display all students" << endl;
         cout << "0. Exit" << endl;
         cout << "Enter your choice: ";
 
         int choice;
         cin >> choice;
+        cout << endl;
 
         if (choice == 0) {
             break;
         }
 
-        Appointment temp;
+        Student temp;
         switch (choice) {
             case 1: {
-                auto available = slots.where([&appointments](const Appointment ap) { return !appointments.contains(ap); });
-                available.print();
+                cout << "Add new student: " << endl; 
+                studs.insert_at(studs.length, *StudentOps::from_stdout());
                 break;
             }
+            
             case 2: {
-                cout << "- Enter start time: ";
-                cin >> temp.start_time;
-                auto available = slots.where([&appointments](const Appointment ap) { return !appointments.contains(ap); });
-                auto slot = available.first_where([&temp](Appointment ap) { return ap.start_time == temp.start_time; });
-                if (slot == nullptr) {
-                    cout << "- Slot with given start time does not exist" << endl;
+                cout << "Delete a student: " << endl;
+                cout << "- Name of student: ";
+                cin >> temp.name;
+                Node<Student> *student = studs.first_where([temp](Student s) { return s.name == temp.name; });
+                if (student == nullptr) {
+                    cout << "- No student exists with given name." << endl;
                 } else {
-                    appointments.insert_at(appointments.length, slot->data);
-                    cout << "- Slot " + to_string(slot->data) + " successfully booked!" << endl;
+                    studs.remove_at(studs.index_of(student));
                 }
                 break;
             }
+
             case 3: {
-                cout << "- Enter start time: ";
-                cin >> temp.start_time;
-                auto available = slots.where([&appointments](const Appointment ap) { return !appointments.contains(ap); });
-                auto slot = available.first_where([&temp](Appointment ap) { return ap.start_time == temp.start_time; });
-                if (slot == nullptr) {
-                    cout << "- Slot with given start time does not exist" << endl;
+                cout << "Today's birthdays: " << endl;
+                LinkedList<Student> birthday_studs = studs.where([date](Student s) {
+                    return to_string(s.dob.day) + "/" + to_string(s.dob.month) == date;
+                });
+                if (birthday_studs.length > 0) {
+                    birthday_studs.print();
                 } else {
-                    appointments.remove_at(appointments.index_of(slot));
-                    cout << "- Slot " + to_string(slot->data) + " successfully cancelled!" << endl;
+                    cout << "There's no one's birthday today" << endl;
                 }
                 break;
             }
+            
             case 4: {
-                slots.sort([](Appointment a1, Appointment a2) { return a1.start_time < a2.start_time; });
-                slots.print();
+                cout << "All students: " << endl;
+                studs.print();
                 break;
             }
+            
             default:
+                cout << "Please select a valid operation..." << endl;
                 break;
         }
+
+        cout << "------------------------------------------------------------------" << endl;
     }
 }

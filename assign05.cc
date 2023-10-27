@@ -49,6 +49,7 @@ class Polynomial {
 
 int main() {
     auto poly = Polynomial::read();
+    auto poly = Polynomial::read();
     cout << "\nGiven polynomial: " << poly.toString() << endl;
     auto addition = Polynomial::add(poly, poly);
     cout << "Addition of given polynomial with itself: " << addition.toString() << endl;

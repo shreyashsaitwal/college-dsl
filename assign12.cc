@@ -52,7 +52,7 @@ int jumpSearch(int elem, int *arr, int size) {
             return i;
         
         if (last > elem) {
-            int binSearch = binarySearch(elem, &arr[i], block);
+            int binSearch = linearSearch(elem, &arr[i], block);
             if (binSearch != -1)
                 return i + binSearch;
         }
@@ -61,9 +61,10 @@ int jumpSearch(int elem, int *arr, int size) {
 }
 
 int main() {
-    int rollNos[] = {67, 41, 36, 85, 10, 65, 21, 74, 20, 64, 82, 57, 11, 88, 62, 99, 46, 91, 72, 22, 53, 34, 1};
+    int rollNos[] = {67, 41, 36, 85, 10, 65, 21, 74, 20, 64, 82, 57, 11, 88, 62, 99, 46, 91, 72, 22, 34, 1};
+    int size = sizeof(rollNos) / sizeof(int);
     cout << "Sorting the roll number list..." << endl;
-    sortIntArr(rollNos, 23);
+    sortIntArr(rollNos, size);
     for (int i : rollNos) {
         cout << i << " ";
     }
@@ -73,12 +74,12 @@ int main() {
     cout << "Enter the roll of student: ";
     cin >> roll;
 
-    int linear = linearSearch(roll, rollNos, 23);
+    int linear = linearSearch(roll, rollNos, size);
     cout << "Linear search result: " << linear << endl;
 
-    int binary = binarySearch(roll, rollNos, 23);
+    int binary = binarySearch(roll, rollNos, size);
     cout << "Binary search result: " << binary << endl;
 
-    int jump = jumpSearch(roll, rollNos, 23);
+    int jump = jumpSearch(roll, rollNos, size);
     cout << "Jump search result: " << jump << endl;
 }
