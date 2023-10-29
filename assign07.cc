@@ -1,5 +1,5 @@
-#include <iostream>
 #include <functional>
+#include <iostream>
 #include <regex>
 
 using namespace std;
@@ -9,6 +9,11 @@ struct Node {
     T data;
     Node<T> *link;
 };
+
+template <typename T>
+bool operator==(Node<T> &a, Node<T> &b) {
+    return a.data == b.data && a.link == b.link;
+}
 
 template <typename T>
 class LinkedList {
@@ -23,10 +28,8 @@ class LinkedList {
 
     LinkedList() : length(_length) {}
 
-    bool has_next() { return current->link != nullptr; }
-
     Node<T> *next() {
-        if (has_next()) {
+        if (current != nullptr) {
             Node<T> *temp = current;
             current = current->link;
             return temp;
@@ -34,65 +37,40 @@ class LinkedList {
         return nullptr;
     }
 
-    Node<T> *peek() {
-        if (has_next()) {
-            return current->link;
-        }
-        return nullptr;
-    }
-
     bool is_empty() { return head == nullptr; }
 
     void print() {
-        if (is_empty()) return;
-        Node<T> *og_curr = current;
-        current = head;
-        do {
-            cout << "- " << to_string(current->data) << endl;
-        } while (next() != nullptr);
-        current = og_curr;
+        for_each([](Node<T> *node) { cout << to_string(node->data) << endl; });
     }
 
     int index_of(Node<T> *node) {
         int idx = -1;
-        Node<T> *og_curr = current;
-        current = head;
-
         int count = 0;
-        while (count < _length) {
-            if (current->data == node->data) {
+        for_each([&count, &idx, &node](Node<T> *n) {
+            if (*n == *node) {
                 idx = count;
-                break;
+                return;
             }
-            next();
             count++;
-        }
-
-        current = og_curr;
+        });
         return idx;
     }
 
     Node<T> *node_at(int idx) {
         if (idx == 0)
             return head;
-        else if (idx == (_length - 1))
+        else if (idx == _length - 1)
             return tail;
 
         Node<T> *res = nullptr;
-        Node<T> *og_curr = current;
-        current = head;
-
         int count = 0;
-        while (count < _length) {
+        for_each([&count, &idx, &res, this](Node<T> *_) {
             if (count == idx) {
                 res = current;
-                break;
+                return;
             }
-            next();
             count++;
-        }
-
-        current = og_curr;
+        });
         return res;
     }
 
@@ -144,49 +122,63 @@ class LinkedList {
         delete node_at_idx;
     }
 
-    Node<T> *first_where(const std::function<bool(T)>& predicate) {
-        LinkedList<T> res = where(predicate);
-        return res.length > 0 ? res.head : nullptr;
+    Node<T> *first_where(const std::function<bool(T)> &predicate) {
+        Node<T> *res = nullptr;
+        if (is_empty()) return res;
+        for_each([predicate, &res](Node<T> *node) {
+            if (predicate(node->data)) {
+                res = node;
+                return;
+            }
+        });
+        return res;
     }
 
-    LinkedList<T> where(const std::function<bool(T)>& predicate) {
+    LinkedList<T> where(const std::function<bool(T)> &predicate) {
         LinkedList<T> res;
         if (is_empty()) return res;
-
-        Node<T> *og_curr = current;
-        current = head;
-        do {
-            if (predicate(current->data)) {
-                res.insert_at(res.length, current->data);
+        for_each([predicate, &res](Node<T> *node) {
+            if (predicate(node->data)) {
+                res.insert_at(res.length, node->data);
             }
-        } while (next());
+        });
         return res;
     }
 
     bool contains(T element) {
-        return where([element](const T e) { return e == element; }).length > 0;
+        return first_where([element](const T e) { return e == element; }) != nullptr;
     }
 
-    void sort(const std::function<bool(T, T)>& predicate) {
-        auto og_curr = current;
+    void for_each(const std::function<void(Node<T> *)> &fn) {
+        if (is_empty()) return;
+        auto *og_curr = current;
         current = head;
         do {
-            auto og_curr2 = current;
-            current = head;
+            fn(current);
+        } while (next()->link != nullptr);
+        current = og_curr;
+    }
+
+    void sort(const std::function<bool(T, T)> &predicate) {
+        for_each([predicate, this](Node<T> *_) {
             Node<T> *prev = nullptr;
-            do {
-                if (!predicate(peek()->data, peek()->link->data)) {
-                    Node<T> *next = peek()->link;
-                    Node<T> *curr = peek();
+            for_each([predicate, &prev, this](Node<T> *node) {
+                if (node->link == nullptr) return;
+                if (!predicate(node->data, node->link->data)) {
+                    Node<T> *curr = node;
+                    Node<T> *next = node->link;
                     curr->link = next->link;
                     next->link = curr;
-                    current->link = next;
+                    if (prev == nullptr) {
+                        head = next;
+                    } else {
+                        prev->link = next;
+                    }
+                    prev = next;
                 }
-                prev = next();
-            } while (peek()->link != nullptr);
-            current = og_curr2;
-        } while (next() != nullptr);
-        current = og_curr;
+                prev = node;
+            });
+        });
     }
 };
 
@@ -195,24 +187,24 @@ struct Appointment {
     float end_time;
 };
 
-string to_string(Appointment& a) {
+string to_string(Appointment &a) {
     string start = regex_replace(to_string(a.start_time), regex("\\."), ":");
-    string end =  regex_replace(to_string(a.end_time), regex("\\."), ":");
-    return "[ " + start.substr(0, start.find(":") + 3) + " - " + end.substr(0, end.find(":") + 3) + " ]";
+    string end = regex_replace(to_string(a.end_time), regex("\\."), ":");
+    return "- [ " + start.substr(0, start.find(":") + 3) + " - " + end.substr(0, end.find(":") + 3) +
+           " ]";
 }
 
-bool operator==(const Appointment& a1, const Appointment& a2) {
+bool operator==(const Appointment &a1, const Appointment &a2) {
     return a1.start_time == a2.start_time && a1.end_time == a2.end_time;
 }
-
 
 int main() {
     LinkedList<Appointment> slots;
     slots.insert_at(slots.length, {9.0, 10.0});
     slots.insert_at(slots.length, {10.30, 11.30});
-    slots.insert_at(slots.length, {12.0, 1.0});
-    slots.insert_at(slots.length, {3.0, 4.0});
-    slots.insert_at(slots.length, {4.30, 5.30});
+    slots.insert_at(slots.length, {12.0, 13.0});
+    slots.insert_at(slots.length, {15.0, 16.0});
+    slots.insert_at(slots.length, {16.30, 17.30});
 
     LinkedList<Appointment> appointments;
     while (true) {
@@ -234,15 +226,18 @@ int main() {
         Appointment temp;
         switch (choice) {
             case 1: {
-                auto available = slots.where([&appointments](const Appointment ap) { return !appointments.contains(ap); });
+                auto available = slots.where(
+                    [&appointments](const Appointment ap) { return !appointments.contains(ap); });
                 available.print();
                 break;
             }
             case 2: {
                 cout << "- Enter start time: ";
                 cin >> temp.start_time;
-                auto available = slots.where([&appointments](const Appointment ap) { return !appointments.contains(ap); });
-                auto slot = available.first_where([&temp](Appointment ap) { return ap.start_time == temp.start_time; });
+                auto available = slots.where(
+                    [&appointments](const Appointment ap) { return !appointments.contains(ap); });
+                auto slot = available.first_where(
+                    [&temp](Appointment ap) { return ap.start_time == temp.start_time; });
                 if (slot == nullptr) {
                     cout << "- Slot with given start time does not exist" << endl;
                 } else {
@@ -254,8 +249,10 @@ int main() {
             case 3: {
                 cout << "- Enter start time: ";
                 cin >> temp.start_time;
-                auto available = slots.where([&appointments](const Appointment ap) { return !appointments.contains(ap); });
-                auto slot = available.first_where([&temp](Appointment ap) { return ap.start_time == temp.start_time; });
+                auto available = slots.where(
+                    [&appointments](const Appointment ap) { return !appointments.contains(ap); });
+                auto slot = available.first_where(
+                    [&temp](Appointment ap) { return ap.start_time == temp.start_time; });
                 if (slot == nullptr) {
                     cout << "- Slot with given start time does not exist" << endl;
                 } else {
@@ -265,12 +262,14 @@ int main() {
                 break;
             }
             case 4: {
-                slots.sort([](Appointment a1, Appointment a2) { return a1.start_time < a2.start_time; });
-                slots.print();
+                appointments.sort(
+                    [](Appointment a1, Appointment a2) { return a1.start_time < a2.start_time; });
+                appointments.print();
                 break;
             }
             default:
                 break;
         }
+        cout << "---------------------------" << endl;
     }
 }
