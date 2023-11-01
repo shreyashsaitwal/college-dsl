@@ -39,6 +39,16 @@ class LinkedList {
 
     bool is_empty() { return head == nullptr; }
 
+    void for_each(const std::function<void(Node<T> *)> &fn) {
+        if (is_empty()) return;
+        auto *og_curr = current;
+        current = head;
+        do {
+            fn(current);
+        } while (next()->link != nullptr);
+        current = og_curr;
+    }
+
     void print() {
         for_each([](Node<T> *node) { cout << to_string(node->data) << endl; });
     }
@@ -49,7 +59,6 @@ class LinkedList {
         for_each([&count, &idx, &node](Node<T> *n) {
             if (*n == *node) {
                 idx = count;
-                return;
             }
             count++;
         });
@@ -67,7 +76,6 @@ class LinkedList {
         for_each([&count, &idx, &res, this](Node<T> *_) {
             if (count == idx) {
                 res = current;
-                return;
             }
             count++;
         });
@@ -128,7 +136,6 @@ class LinkedList {
         for_each([predicate, &res](Node<T> *node) {
             if (predicate(node->data)) {
                 res = node;
-                return;
             }
         });
         return res;
@@ -147,16 +154,6 @@ class LinkedList {
 
     bool contains(T element) {
         return first_where([element](const T e) { return e == element; }) != nullptr;
-    }
-
-    void for_each(const std::function<void(Node<T> *)> &fn) {
-        if (is_empty()) return;
-        auto *og_curr = current;
-        current = head;
-        do {
-            fn(current);
-        } while (next()->link != nullptr);
-        current = og_curr;
     }
 
     void sort(const std::function<bool(T, T)> &predicate) {
@@ -210,9 +207,10 @@ int main() {
     while (true) {
         cout << "Select operation: " << endl;
         cout << "1. Display available slots" << endl;
-        cout << "2. Book appointment" << endl;
-        cout << "3. Cancel appointment" << endl;
-        cout << "4. Sort appointments" << endl;
+        cout << "2. Display booked slots" << endl;
+        cout << "3. Book appointment" << endl;
+        cout << "4. Cancel appointment" << endl;
+        cout << "5. Sort appointments" << endl;
         cout << "0. Exit" << endl;
         cout << "Enter your choice: ";
 
@@ -232,6 +230,10 @@ int main() {
                 break;
             }
             case 2: {
+                appointments.print();
+                break;
+            }
+            case 3: {
                 cout << "- Enter start time: ";
                 cin >> temp.start_time;
                 auto available = slots.where(
@@ -246,7 +248,7 @@ int main() {
                 }
                 break;
             }
-            case 3: {
+            case 4: {
                 cout << "- Enter start time: ";
                 cin >> temp.start_time;
                 auto available = slots.where(
@@ -261,13 +263,14 @@ int main() {
                 }
                 break;
             }
-            case 4: {
+            case 5: {
                 appointments.sort(
                     [](Appointment a1, Appointment a2) { return a1.start_time < a2.start_time; });
                 appointments.print();
                 break;
             }
             default:
+                cout << "Please select a valid option" << endl;
                 break;
         }
         cout << "---------------------------" << endl;
