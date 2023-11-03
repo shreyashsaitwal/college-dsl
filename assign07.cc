@@ -195,7 +195,7 @@ bool operator==(const Appointment &a1, const Appointment &a2) {
     return a1.start_time == a2.start_time && a1.end_time == a2.end_time;
 }
 
-int main() {
+void app() {
     LinkedList<Appointment> slots;
     slots.insert_at(slots.length, {9.0, 10.0});
     slots.insert_at(slots.length, {10.30, 11.30});
@@ -204,6 +204,7 @@ int main() {
     slots.insert_at(slots.length, {16.30, 17.30});
 
     LinkedList<Appointment> appointments;
+    LinkedList<Appointment> cancelled;
     while (true) {
         cout << "Select operation: " << endl;
         cout << "1. Display available slots" << endl;
@@ -258,6 +259,7 @@ int main() {
                 if (slot == nullptr) {
                     cout << "- Slot with given start time does not exist" << endl;
                 } else {
+                    cancelled.insert_at(cancelled.length, slot->data);
                     appointments.remove_at(appointments.index_of(slot));
                     cout << "- Slot " + to_string(slot->data) + " successfully cancelled!" << endl;
                 }
@@ -269,10 +271,118 @@ int main() {
                 appointments.print();
                 break;
             }
+            case 6: {
+                if (cancelled.length > 0) {
+                    cout << "Cancelled appointments: " << endl;
+                    cancelled.print();
+                } else {
+                    cout << "There is no cancelled appointment" << endl;
+                }
+                break;
+            }
             default:
                 cout << "Please select a valid option" << endl;
                 break;
         }
         cout << "---------------------------" << endl;
     }
+}
+
+void app_v2() {
+    float start = 9.0;
+    float end = 17.0;
+    float max_time = 1.5;
+
+    LinkedList<Appointment> appointments;
+    while (true) {
+        cout << "Select operation: " << endl;
+        cout << "1. Display booked slots" << endl;
+        cout << "2. Book appointment" << endl;
+        cout << "3. Cancel appointment" << endl;
+        cout << "4. Sort appointments" << endl;
+        cout << "0. Exit" << endl;
+        cout << "Enter your choice: ";
+
+        int choice;
+        cin >> choice;
+
+        if (choice == 0) {
+            break;
+        }
+
+        switch (choice) {
+            case 1: {
+                if (!appointments.is_empty()) {
+                    appointments.print();
+                } else {
+                    cout << "No appointment booked for today" << endl;
+                }
+                break;
+            }
+            case 2: {
+                Appointment *temp = new Appointment;
+                cout << "- Enter start time: ";
+                cin >> temp->start_time;
+                cout << "- Enter end time: ";
+                cin >> temp->end_time;
+                if (temp->start_time < start || temp->end_time > end) {
+                    cout << "We don't take any appointements before 8:00 and after 17:00" << endl;
+                    break;
+                }
+
+                auto conflicting = appointments.first_where([temp](Appointment ap) {
+                    return (temp->start_time >= ap.start_time && temp->start_time <= ap.end_time)
+                    || (temp->end_time <= ap.end_time && temp->end_time >= ap.start_time);
+                });
+                if (conflicting != nullptr) {
+                    cout << "Sorry, we already have an appointment between that time frame" << endl;
+                    break;
+                } else if (temp->end_time - temp->start_time > 1.5) {
+                    cout << "Sorry, we currently don't accept appointments longer than 1.5 hours" << endl;
+                    break;
+                }
+
+                appointments.insert_at(appointments.length, Appointment { temp->start_time, temp->end_time });
+                cout << "Slot " << to_string(*temp) << " successfully booked!" << endl;
+                break;
+            }
+            case 3: {
+                Appointment *temp = new Appointment;
+                cout << "- Enter start time: ";
+                cin >> temp->start_time;
+                auto slot = appointments.first_where(
+                    [&temp](Appointment ap) { return ap.start_time == temp->start_time; });
+                if (slot == nullptr) {
+                    cout << "- Slot with given start time does not exist" << endl;
+                } else {
+                    cout << "- Slot " + to_string(slot->data) + " successfully cancelled!" << endl;
+                    appointments.remove_at(appointments.index_of(slot));
+                }
+                break;
+            }
+            case 4: {
+                appointments.sort(
+                    [](Appointment a1, Appointment a2) { return a1.start_time < a2.start_time; });
+                appointments.print();
+                break;
+            }
+            // case 5: {
+            //     if (cancelled.length > 0) {
+            //         cout << "Cancelled appointments: " << endl;
+            //         cancelled.print();
+            //     } else {
+            //         cout << "There is no cancelled appointment" << endl;
+            //     }
+            //     break;
+            // }
+            default:
+                cout << "Please select a valid option" << endl;
+                break;
+        }
+        cout << "---------------------------" << endl;
+    }
+}
+
+int main() {
+    app_v2();
 }
