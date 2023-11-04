@@ -1,6 +1,6 @@
-#include <iostream>
-#include <functional>
 #include <ctime>
+#include <functional>
+#include <iostream>
 
 using namespace std;
 
@@ -123,9 +123,14 @@ class LinkedList {
         } else {
             Node<T> *node_at_prev_idx = node_at(idx - 1);
             node_at_prev_idx->link = node_at_idx->link;
+            if (idx == _length - 1) {
+                tail = node_at_prev_idx;
+            }
         }
 
-        if (current == node_at_idx) {
+        if (_length - 1 == 0) {
+            head = tail = current = nullptr;
+        } else if (current == node_at_idx) {
             if (idx == _length - 1) {
                 current = head;
             } else {
@@ -137,12 +142,12 @@ class LinkedList {
         delete node_at_idx;
     }
 
-    Node<T> *first_where(const std::function<bool(T)>& predicate) {
+    Node<T> *first_where(const std::function<bool(T)> &predicate) {
         LinkedList<T> res = where(predicate);
         return res.length > 0 ? res.head : nullptr;
     }
 
-    LinkedList<T> where(const std::function<bool(T)>& predicate) {
+    LinkedList<T> where(const std::function<bool(T)> &predicate) {
         LinkedList<T> res;
         Node<T> *og_curr = current;
         current = head;
@@ -179,23 +184,19 @@ class StudentOps {
 };
 
 string to_string(Student stud) {
-    return "- " + stud.name + 
-        " (" + std::to_string(stud.dob.day) + "/" 
-        + std::to_string(stud.dob.month) + "/" 
-        + std::to_string(stud.dob.year) + ")";
+    return "- " + stud.name + " (" + std::to_string(stud.dob.day) + "/" +
+           std::to_string(stud.dob.month) + "/" + std::to_string(stud.dob.year) + ")";
 }
 
-bool operator==(DOB& d1, DOB& d2) {
+bool operator==(DOB &d1, DOB &d2) {
     return d1.day == d2.day && d1.month == d2.month && d1.year == d2.year;
 }
 
-bool operator==(Student& s1, Student& s2) {
-    return (s1.name == s2.name) && (s1.dob == s2.dob);
-}
+bool operator==(Student &s1, Student &s2) { return (s1.name == s2.name) && (s1.dob == s2.dob); }
 
 string todays_date() {
     time_t t = time(0);
-    tm* now = localtime(&t);
+    tm *now = localtime(&t);
     string res = to_string(now->tm_mday) + "/" + to_string(now->tm_mon + 1);
     return res;
 }
@@ -223,16 +224,17 @@ int main() {
         Student temp;
         switch (choice) {
             case 1: {
-                cout << "Add new student: " << endl; 
+                cout << "Add new student: " << endl;
                 studs.insert_at(studs.length, *StudentOps::from_stdout());
                 break;
             }
-            
+
             case 2: {
                 cout << "Delete a student: " << endl;
                 cout << "- Name of student: ";
                 cin >> temp.name;
-                Node<Student> *student = studs.first_where([temp](Student s) { return s.name == temp.name; });
+                Node<Student> *student =
+                    studs.first_where([temp](Student s) { return s.name == temp.name; });
                 if (student == nullptr) {
                     cout << "- No student exists with given name." << endl;
                 } else {
@@ -253,13 +255,13 @@ int main() {
                 }
                 break;
             }
-            
+
             case 4: {
                 cout << "All students: " << endl;
                 studs.print();
                 break;
             }
-            
+
             default:
                 cout << "Please select a valid operation..." << endl;
                 break;

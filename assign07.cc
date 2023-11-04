@@ -116,9 +116,14 @@ class LinkedList {
         } else {
             Node<T> *node_at_prev_idx = node_at(idx - 1);
             node_at_prev_idx->link = node_at_idx->link;
+            if (idx == _length - 1) {
+                tail = node_at_prev_idx;
+            }
         }
 
-        if (current == node_at_idx) {
+        if (_length - 1 == 0) {
+            head = tail = current = nullptr;
+        } else if (current == node_at_idx) {
             if (idx == _length - 1) {
                 current = head;
             } else {
@@ -187,8 +192,8 @@ struct Appointment {
 string to_string(Appointment &a) {
     string start = regex_replace(to_string(a.start_time), regex("\\."), ":");
     string end = regex_replace(to_string(a.end_time), regex("\\."), ":");
-    return "- [ " + start.substr(0, start.find(":") + 3) + " - " + end.substr(0, end.find(":") + 3) +
-           " ]";
+    return "- [ " + start.substr(0, start.find(":") + 3) + " - " +
+           end.substr(0, end.find(":") + 3) + " ]";
 }
 
 bool operator==(const Appointment &a1, const Appointment &a2) {
@@ -331,18 +336,20 @@ void app_v2() {
                 }
 
                 auto conflicting = appointments.first_where([temp](Appointment ap) {
-                    return (temp->start_time >= ap.start_time && temp->start_time <= ap.end_time)
-                    || (temp->end_time <= ap.end_time && temp->end_time >= ap.start_time);
+                    return (temp->start_time >= ap.start_time && temp->start_time <= ap.end_time) ||
+                           (temp->end_time <= ap.end_time && temp->end_time >= ap.start_time);
                 });
                 if (conflicting != nullptr) {
                     cout << "Sorry, we already have an appointment between that time frame" << endl;
                     break;
                 } else if (temp->end_time - temp->start_time > 1.5) {
-                    cout << "Sorry, we currently don't accept appointments longer than 1.5 hours" << endl;
+                    cout << "Sorry, we currently don't accept appointments longer than 1.5 hours"
+                         << endl;
                     break;
                 }
 
-                appointments.insert_at(appointments.length, Appointment { temp->start_time, temp->end_time });
+                appointments.insert_at(appointments.length,
+                                       Appointment{temp->start_time, temp->end_time});
                 cout << "Slot " << to_string(*temp) << " successfully booked!" << endl;
                 break;
             }
@@ -383,6 +390,4 @@ void app_v2() {
     }
 }
 
-int main() {
-    app_v2();
-}
+int main() { app_v2(); }
