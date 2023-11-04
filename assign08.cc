@@ -6,15 +6,20 @@
 // 5. postfix to prefix
 
 #include <iostream>
+
 using namespace std;
 
 enum class Operator { Plus, Minus, Multiply, Divide };
 
 Operator oper_from_string(string o) {
-    if (o == "+") return Operator::Plus;
-    else if (o == "-") return Operator::Minus;
-    else if (o == "*") return Operator::Multiply;
-    else return Operator::Divide;
+    if (o == "+")
+        return Operator::Plus;
+    else if (o == "-")
+        return Operator::Minus;
+    else if (o == "*")
+        return Operator::Multiply;
+    else
+        return Operator::Divide;
 }
 
 enum class Operand { Literal, Expr };
@@ -35,6 +40,4 @@ struct Expr {
 
 // }
 
-int main() {
-
-}
+int main() {}
