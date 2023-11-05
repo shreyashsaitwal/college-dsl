@@ -30,7 +30,7 @@ class LinkedList {
 
     Node<T> *next() {
         if (current != nullptr) {
-            Node<T> *temp = current;
+            auto *temp = current;
             current = current->link;
             return temp;
         }
@@ -39,18 +39,21 @@ class LinkedList {
 
     bool is_empty() { return head == nullptr; }
 
-    void for_each(const std::function<void(Node<T> *)> &fn) {
+    void for_each(const std::function<bool(Node<T> *)> &fn) {
         if (is_empty()) return;
         auto *og_curr = current;
         current = head;
         do {
-            fn(current);
+            if (fn(current)) break;
         } while (next()->link != nullptr);
         current = og_curr;
     }
 
     void print() {
-        for_each([](Node<T> *node) { cout << to_string(node->data) << endl; });
+        for_each([](Node<T> *node) {
+            cout << to_string(node->data) << endl;
+            return false;
+        });
     }
 
     int index_of(Node<T> *node) {
@@ -59,8 +62,10 @@ class LinkedList {
         for_each([&count, &idx, &node](Node<T> *n) {
             if (*n == *node) {
                 idx = count;
+                return true;
             }
             count++;
+            return false;
         });
         return idx;
     }
@@ -76,15 +81,17 @@ class LinkedList {
         for_each([&count, &idx, &res, this](Node<T> *_) {
             if (count == idx) {
                 res = current;
+                return true;
             }
             count++;
+            return false;
         });
         return res;
     }
 
     void insert_at(int idx, T element) {
-        Node<T> *new_node = new Node<T>{element, nullptr};
-        Node<T> *curr_node_at_idx = node_at(idx);
+        auto *new_node = new Node<T>{element, nullptr};
+        auto *curr_node_at_idx = node_at(idx);
 
         if (is_empty()) {
             head = tail = current = new_node;
@@ -96,7 +103,7 @@ class LinkedList {
             if (idx == 0) {
                 head = new_node;
             } else {
-                Node<T> *node_at_prev_idx = node_at(idx - 1);
+                auto *node_at_prev_idx = node_at(idx - 1);
                 node_at_prev_idx->link = new_node;
             }
         }
@@ -110,11 +117,11 @@ class LinkedList {
     void remove_at(int idx) {
         if (is_empty() || idx >= _length) return;
 
-        Node<T> *node_at_idx = node_at(idx);
+        auto *node_at_idx = node_at(idx);
         if (idx == 0) {
             head = node_at_idx->link;
         } else {
-            Node<T> *node_at_prev_idx = node_at(idx - 1);
+            auto *node_at_prev_idx = node_at(idx - 1);
             node_at_prev_idx->link = node_at_idx->link;
             if (idx == _length - 1) {
                 tail = node_at_prev_idx;
@@ -141,7 +148,9 @@ class LinkedList {
         for_each([predicate, &res](Node<T> *node) {
             if (predicate(node->data)) {
                 res = node;
+                return true;
             }
+            return false;
         });
         return res;
     }
@@ -153,6 +162,7 @@ class LinkedList {
             if (predicate(node->data)) {
                 res.insert_at(res.length, node->data);
             }
+            return false;
         });
         return res;
     }
@@ -162,13 +172,19 @@ class LinkedList {
     }
 
     void sort(const std::function<bool(T, T)> &predicate) {
-        for_each([predicate, this](Node<T> *_) {
+        int iters = length;
+        for_each([predicate, &iters, this](Node<T> *_) {
             Node<T> *prev = nullptr;
-            for_each([predicate, &prev, this](Node<T> *node) {
-                if (node->link == nullptr) return;
+            int count = 0;
+
+            for_each([predicate, &prev, &iters, &count, this](Node<T> *node) {
+                if (node->link == nullptr || count > iters) {
+                    return true;
+                }
+
                 if (!predicate(node->data, node->link->data)) {
-                    Node<T> *curr = node;
-                    Node<T> *next = node->link;
+                    auto *curr = node;
+                    auto *next = node->link;
                     curr->link = next->link;
                     next->link = curr;
                     if (prev == nullptr) {
@@ -178,8 +194,14 @@ class LinkedList {
                     }
                     prev = next;
                 }
+
+                count++;
                 prev = node;
+                return false;
             });
+
+            iters--;
+            return false;
         });
     }
 };
@@ -257,9 +279,7 @@ void app() {
             case 4: {
                 cout << "- Enter start time: ";
                 cin >> temp.start_time;
-                auto available = slots.where(
-                    [&appointments](const Appointment ap) { return !appointments.contains(ap); });
-                auto slot = available.first_where(
+                auto slot = appointments.first_where(
                     [&temp](Appointment ap) { return ap.start_time == temp.start_time; });
                 if (slot == nullptr) {
                     cout << "- Slot with given start time does not exist" << endl;
@@ -325,7 +345,7 @@ void app_v2() {
                 break;
             }
             case 2: {
-                Appointment *temp = new Appointment;
+                auto *temp = new Appointment;
                 cout << "- Enter start time: ";
                 cin >> temp->start_time;
                 cout << "- Enter end time: ";
@@ -342,19 +362,14 @@ void app_v2() {
                 if (conflicting != nullptr) {
                     cout << "Sorry, we already have an appointment between that time frame" << endl;
                     break;
-                } else if (temp->end_time - temp->start_time > 1.5) {
-                    cout << "Sorry, we currently don't accept appointments longer than 1.5 hours"
-                         << endl;
-                    break;
                 }
 
-                appointments.insert_at(appointments.length,
-                                       Appointment{temp->start_time, temp->end_time});
+                appointments.insert_at(appointments.length, *temp);
                 cout << "Slot " << to_string(*temp) << " successfully booked!" << endl;
                 break;
             }
             case 3: {
-                Appointment *temp = new Appointment;
+                auto *temp = new Appointment;
                 cout << "- Enter start time: ";
                 cin >> temp->start_time;
                 auto slot = appointments.first_where(
@@ -373,15 +388,6 @@ void app_v2() {
                 appointments.print();
                 break;
             }
-            // case 5: {
-            //     if (cancelled.length > 0) {
-            //         cout << "Cancelled appointments: " << endl;
-            //         cancelled.print();
-            //     } else {
-            //         cout << "There is no cancelled appointment" << endl;
-            //     }
-            //     break;
-            // }
             default:
                 cout << "Please select a valid option" << endl;
                 break;
