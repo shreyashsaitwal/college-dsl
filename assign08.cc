@@ -79,6 +79,7 @@ bool is_operator(char c) {
 int precedence(char c) {
     if (c == '+' || c == '-') return 1;
     if (c == '*' || c == '/') return 2;
+    if (c == '^') return 3;
     return 0;
 }
 
@@ -92,8 +93,8 @@ string reverse(string str) {
 
 enum Notation { INFIX, PREFIX, POSTFIX };
 
-string convert_infix(string expr, Notation notation) {
-    if (notation == INFIX) return expr;
+string convert_infix(string expr, Notation into) {
+    if (into == INFIX) return expr;
 
     Stack<char> operators;
     string output = "";
@@ -103,7 +104,7 @@ string convert_infix(string expr, Notation notation) {
         if (!is_operator(ch)) {
             output = ch + output;
         } else if (ch == ')') {
-            operators.push(ch);    
+            operators.push(ch);
         } else if (ch == '(') {
             while (operators.length > 0 && operators.peek() != ')') {
                 output = operators.pop() + output;
@@ -122,17 +123,19 @@ string convert_infix(string expr, Notation notation) {
         return false;
     });
 
-    if (notation == PREFIX) return output;
-    else return reverse(output);
+    if (into == PREFIX)
+        return output;
+    else
+        return reverse(output);
 }
 
-string convert_prefix(string expr, Notation notation) {
-    if (notation == PREFIX) {
+string convert_prefix(string expr, Notation into) {
+    if (into == PREFIX) {
         return expr;
     }
 
     string rev = reverse(expr);
-    if (notation == POSTFIX) {
+    if (into == POSTFIX) {
         return rev;
     }
 
@@ -149,18 +152,48 @@ string convert_prefix(string expr, Notation notation) {
     return stack.pop();
 }
 
-string convert_postfix(string expr, Notation notation) {
-    return convert_prefix(reverse(expr), notation);
-}
+string convert_postfix(string expr, Notation into) { return convert_prefix(reverse(expr), into); }
 
 int main() {
-    cout << "Enter an infix notation: ";
-    string input;
-    cin >> input;
-    string pre = convert_infix(input, PREFIX);
-    string post = convert_infix(input, POSTFIX);
-    cout << "- Prefix:  " << pre << endl;
-    cout << "- Postfix: " << post << endl;
-    cout << "- Infix (from prefix): " << convert_prefix(pre, INFIX) << endl;
-    cout << "- Infix (from postfix): " << convert_postfix(post, INFIX) << endl;
+    while (true) {
+        cout << "Select one of the following conversion operations:" << endl;
+        cout << "1. Infix to prefix" << endl;
+        cout << "2. Prefix to postfix" << endl;
+        cout << "3. Prefix to infix" << endl;
+        cout << "4. Postfix to infix" << endl;
+        cout << "5. Postfix to prefix" << endl;
+
+        int choice;
+        cout << "Enter your choice: ";
+        cin >> choice;
+
+        string input;
+        cout << "Enter an expression: ";
+        cin >> input;
+
+        string output;
+        switch (choice) {
+            case 1:
+                output = convert_infix(input, PREFIX);
+                break;
+            case 2:
+                output = convert_infix(input, POSTFIX);
+                break;
+            case 3:
+                output = convert_prefix(input, INFIX);
+                break;
+            case 4:
+                output = convert_postfix(input, INFIX);
+                break;
+            case 5:
+                output = convert_postfix(input, PREFIX);
+                break;
+            default:
+                cout << "Invalid choice" << endl;
+                break;
+        }
+
+        cout << "- Result: " << output << endl;
+        cout << "--------------------------------------------" << endl << endl;
+    }
 }
