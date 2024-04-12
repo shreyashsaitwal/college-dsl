@@ -3,12 +3,12 @@
  * inorder sequence and test your tree with all traversals.
  */
 
-#include <functional>
 #include <algorithm>
+#include <functional>
 #include <iostream>
 #include <sstream>
-#include <vector>
 #include <stack>
+#include <vector>
 
 using namespace std;
 
@@ -122,7 +122,5 @@ class BST {
 int main() {
     string seq = "10 5 3 7 15 12 18";
     BST bst = BST::from_seq(SeqOrder::pre, seq);
-    bst.traverse([](int i) {
-        cout << i << endl;
-    });
+    bst.traverse([](int i) { cout << i << endl; });
 }
